@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>PORTUS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sea-top:#0a2230; --sea-bot:#0d1718;
+    --panel:#142a30; --panel2:#1a363d;
+    --gold:#e8b84b; --goldsoft:#c8a24c;
+    --terra:#e07a5f; --terradark:#b85a42;
+    --cream:#f3e9d6; --muted:#9cb2ad;
+    --line:rgba(232,184,75,.18); --bad:#e2685f; --good:#7fd6a8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Spectral',Georgia,serif;color:var(--cream);
+    background:
+      radial-gradient(120% 60% at 50% -10%, rgba(232,184,75,.14), rgba(232,184,75,0) 55%),
+      radial-gradient(80% 50% at 50% 8%, rgba(224,122,95,.10), rgba(224,122,95,0) 60%),
+      linear-gradient(180deg, var(--sea-top), var(--sea-bot));
+    background-attachment:fixed;
+    min-height:100%;
+    overscroll-behavior:none;
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:0 14px 90px;}
+
+  /* header */
+  header{padding:18px 0 8px;text-align:center;position:relative;}
+  h1{font-family:'Cinzel',serif;font-weight:700;font-size:34px;letter-spacing:6px;color:var(--gold);
+     text-shadow:0 0 18px rgba(232,184,75,.25);}
+  .tag{font-style:italic;color:var(--muted);font-size:13px;margin-top:2px;letter-spacing:.5px;}
+  .topbtns{position:absolute;top:16px;right:0;display:flex;gap:8px;}
+  .icobtn{background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--goldsoft);
+    width:34px;height:34px;border-radius:9px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .icobtn:active{transform:scale(.92);}
+
+  /* resource bar */
+  .resbar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+    padding:10px;margin:6px 0 14px;
+    background:linear-gradient(180deg, rgba(20,42,48,.96), rgba(20,42,48,.86));
+    border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(6px);}
+  .chip{display:flex;align-items:center;gap:7px;padding:4px 4px 4px 8px;min-width:96px;}
+  .chip.hide{display:none;}
+  .chip .ic{font-size:18px;filter:saturate(1.1);}
+  .chip .col{display:flex;flex-direction:column;line-height:1.05;}
+  .chip .amt{font-weight:600;font-size:16px;color:var(--cream);font-variant-numeric:tabular-nums;}
+  .chip .rate{font-size:10.5px;color:var(--muted);font-family:'Spectral';}
+  .chip .rate.pos{color:var(--good);} .chip .rate.neg{color:var(--bad);}
+
+  /* population */
+  .pop{display:flex;align-items:center;gap:10px;margin:0 2px 16px;padding:10px 14px;
+    border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.025);}
+  .pop .lbl{font-family:'Cinzel';font-size:12px;letter-spacing:2px;color:var(--goldsoft);}
+  .pop .bar{flex:1;height:8px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden;}
+  .pop .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--terra),var(--gold));transition:width .25s;}
+  .pop .num{font-weight:600;font-variant-numeric:tabular-nums;}
+
+  /* section title */
+  .sect{font-family:'Cinzel';font-size:13px;letter-spacing:3px;color:var(--goldsoft);
+    margin:4px 4px 10px;display:flex;align-items:center;gap:10px;}
+  .sect::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  /* building cards */
+  #builds{display:flex;flex-direction:column;gap:11px;}
+  .card{border:1px solid var(--line);border-radius:14px;padding:13px 14px;
+    background:linear-gradient(180deg, var(--panel2), var(--panel));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 6px 18px rgba(0,0,0,.25);
+    animation:rise .35s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .crow{display:flex;align-items:flex-start;gap:11px;}
+  .cic{font-size:26px;line-height:1;margin-top:1px;}
+  .cmain{flex:1;min-width:0;}
+  .cname{font-family:'Cinzel';font-weight:600;font-size:16px;letter-spacing:1px;color:var(--cream);}
+  .cblurb{font-size:13px;color:var(--muted);margin-top:2px;font-style:italic;}
+  .owned{font-family:'Cinzel';font-size:14px;color:var(--gold);font-weight:700;min-width:34px;text-align:right;}
+  .crow2{display:flex;align-items:center;gap:8px;margin-top:11px;}
+  .costs{display:flex;flex-wrap:wrap;gap:6px;flex:1;}
+  .cc{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--cream);
+    background:rgba(255,255,255,.05);padding:2px 8px;border-radius:7px;font-variant-numeric:tabular-nums;}
+  .cc.lack{color:var(--bad);background:rgba(226,104,95,.12);}
+  .build{font-family:'Cinzel';font-weight:700;letter-spacing:1px;font-size:14px;
+    background:linear-gradient(180deg,var(--terra),var(--terradark));color:#1a0f0a;
+    border:none;border-radius:10px;padding:10px 16px;cursor:pointer;white-space:nowrap;
+    box-shadow:0 3px 0 rgba(0,0,0,.25);}
+  .build:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.25);}
+  .build.off{filter:grayscale(.7) brightness(.7);opacity:.65;}
+
+  .next{margin:16px 4px 4px;font-size:12.5px;color:var(--muted);font-style:italic;text-align:center;}
+  .next b{color:var(--goldsoft);font-style:normal;}
+
+  /* log */
+  .log{margin-top:18px;border-top:1px solid var(--line);padding-top:10px;}
+  .log p{font-size:12.5px;color:var(--muted);margin:3px 0;opacity:.9;}
+  .log p:first-child{color:var(--cream);}
+
+  /* footer */
+  footer{text-align:center;color:rgba(156,178,173,.6);font-size:11px;margin-top:18px;letter-spacing:.5px;}
+
+  /* float +text on gain */
+  .pluspop{position:fixed;left:50%;top:160px;transform:translateX(-50%);color:var(--good);
+    font-family:'Cinzel';font-weight:700;pointer-events:none;opacity:0;}
+
+  /* offline modal */
+  .ovl{position:fixed;inset:0;z-index:50;background:rgba(5,12,14,.82);backdrop-filter:blur(4px);
+    display:none;align-items:center;justify-content:center;padding:24px;}
+  .ovl.show{display:flex;}
+  .modal{max-width:360px;width:100%;border:1px solid var(--line);border-radius:18px;padding:24px;text-align:center;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .modal h2{font-family:'Cinzel';color:var(--gold);font-size:20px;letter-spacing:2px;margin-bottom:6px;}
+  .modal .sub{color:var(--muted);font-size:13px;font-style:italic;margin-bottom:14px;}
+  .modal .gains{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
+  .modal .g{display:flex;justify-content:space-between;font-size:15px;}
+  .modal .g .v{color:var(--good);font-weight:600;font-variant-numeric:tabular-nums;}
+  .modal button{font-family:'Cinzel';font-weight:700;letter-spacing:1px;border:none;border-radius:11px;padding:12px 22px;
+    background:linear-gradient(180deg,var(--gold),var(--goldsoft));color:#241a06;cursor:pointer;width:100%;}
+  .modal button:active{transform:scale(.97);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>PORTVS</h1>
+    <div class="tag">forja tu imperio del Mediterráneo</div>
+    <div class="topbtns">
+      <button class="icobtn" id="saveBtn" title="Guardar">💾</button>
+      <button class="icobtn" id="resetBtn" title="Reiniciar">↺</button>
+    </div>
+  </header>
+
+  <div class="resbar" id="resbar">
+    <div class="chip" data-res="food"><span class="ic">🐟</span><div class="col"><span class="amt" id="a-food">0</span><span class="rate" id="r-food">+0/s</span></div></div>
+    <div class="chip" data-res="wood"><span class="ic">🪵</span><div class="col"><span class="amt" id="a-wood">0</span><span class="rate" id="r-wood">+0/s</span></div></div>
+    <div class="chip hide" data-res="stone"><span class="ic">🪨</span><div class="col"><span class="amt" id="a-stone">0</span><span class="rate" id="r-stone">+0/s</span></div></div>
+    <div class="chip hide" data-res="coin"><span class="ic">🪙</span><div class="col"><span class="amt" id="a-coin">0</span><span class="rate" id="r-coin">+0/s</span></div></div>
+  </div>
+
+  <div class="pop">
+    <span class="lbl">POBLACIÓN</span>
+    <div class="bar"><div class="fill" id="popFill"></div></div>
+    <span class="num"><span id="popNow">0</span> / <span id="popCap">0</span></span>
+  </div>
+
+  <div class="sect">EDIFICIOS</div>
+  <div id="builds"></div>
+  <div class="next" id="nextHint"></div>
+
+  <div class="log" id="log"></div>
+  <footer>v0.1 · guardado automático · hecho contigo</footer>
+</div>
+
+<div class="pluspop" id="pluspop"></div>
+
+<div class="ovl" id="ovl">
+  <div class="modal">
+    <h2>Mientras no estabas…</h2>
+    <div class="sub" id="awayTime"></div>
+    <div class="gains" id="awayGains"></div>
+    <button id="ovlBtn">¡A SEGUIR!</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- building definitions ----------
+  // prod: per-second production. popCap: housing added. mult: cost growth per copy.
+  const DEFS = [
+    { id:'casa',  name:'Casa',       ic:'🏠', blurb:'Da cobijo. +4 de población máx.',
+      base:{wood:10}, mult:1.18, popCap:4 },
+    { id:'muelle',name:'Muelle',     ic:'⚓', blurb:'Pesca en la bahía. Produce comida.',
+      base:{wood:14}, mult:1.16, prod:{food:0.6} },
+    { id:'aserra',name:'Aserradero', ic:'🪓', blurb:'Tala los bosques. Produce madera.',
+      base:{food:18}, mult:1.16, prod:{wood:0.5} },
+    { id:'mercado',name:'Mercado',   ic:'🪙', blurb:'Comercia por el Mare Nostrum. Produce denarios.',
+      base:{wood:30,food:24}, mult:1.20, prod:{coin:0.4},
+      unlock:s=>s.pop>=4, req:'4 de población' },
+    { id:'cantera',name:'Cantera',   ic:'⛏️', blurb:'Extrae piedra de la montaña.',
+      base:{wood:42}, mult:1.18, prod:{stone:0.45},
+      unlock:s=>s.pop>=6, req:'6 de población' },
+    { id:'villa', name:'Villa',      ic:'🏛️', blurb:'Lujo y prestigio. +10 población máx. y +5% a TODA la producción.',
+      base:{stone:30,coin:22}, mult:1.22, popCap:10,
+      unlock:s=>(s.peakStone||s.res.stone)>=20, req:'20 de piedra' },
+    { id:'faro',  name:'Faro',       ic:'🗼', blurb:'Guía a los mercaderes. +25% a los denarios.',
+      base:{stone:60,coin:60}, mult:1.25,
+      unlock:s=>(s.peakCoin||s.res.coin)>=80, req:'80 de denarios' }
+  ];
+  const DEF = {}; DEFS.forEach(d=>DEF[d.id]=d);
+
+  // ---------- state ----------
+  function freshState(){
+    return {
+      res:{food:25, wood:25, stone:0, coin:0},
+      pop:2, popCap:5,
+      b:{}, unlocked:{},
+      peakStone:0, peakCoin:0,
+      lastSave:Date.now(), started:Date.now()
+    };
+  }
+  let state = freshState();
+
+  // ---------- helpers ----------
+  function fmt(n){
+    n = Math.floor(n);
+    if(n < 10000) return n.toString();
+    if(n < 1e6) return (n/1e3).toFixed(1).replace(/\.0$/,'')+'K';
+    if(n < 1e9) return (n/1e6).toFixed(2).replace(/\.?0+$/,'')+'M';
+    return (n/1e9).toFixed(2).replace(/\.?0+$/,'')+'B';
+  }
+  function costOf(d){
+    const c = {}; const n = state.b[d.id]||0;
+    for(const r in d.base) c[r] = Math.ceil(d.base[r] * Math.pow(d.mult, n));
+    return c;
+  }
+  function canAfford(d){
+    const c = costOf(d);
+    for(const r in c) if(state.res[r] < c[r]) return false;
+    return true;
+  }
+  function recomputeCap(){
+    let cap = 5;
+    for(const d of DEFS) if(d.popCap) cap += (state.b[d.id]||0)*d.popCap;
+    state.popCap = cap;
+  }
+  function rates(){
+    const rate = {food:0,wood:0,stone:0,coin:0};
+    const popMult = 1 + state.pop*0.02;
+    const globalMult = 1 + (state.b.villa||0)*0.05;
+    const coinMult = globalMult * (1 + (state.b.faro||0)*0.25);
+    for(const d of DEFS){
+      const n = state.b[d.id]||0; if(!n || !d.prod) continue;
+      for(const r in d.prod){
+        let m = popMult*globalMult;
+        if(r==='coin') m = popMult*coinMult;
+        rate[r] += n * d.prod[r] * m;
+      }
+    }
+    const consumption = state.pop*0.2;
+    const netFood = rate.food - consumption;
+    return {rate, netFood, consumption};
+  }
+
+  // ---------- log ----------
+  const logEl = document.getElementById('log');
+  let logs = [];
+  function log(msg){
+    logs.unshift(msg);
+    if(logs.length>6) logs.pop();
+    logEl.innerHTML = logs.map(m=>'<p>'+m+'</p>').join('');
+  }
+
+  // ---------- build cards ----------
+  const buildsEl = document.getElementById('builds');
+  let cards = []; // {def, el, btn, ownedEl, chips:[{res,amt,el}]}
+  let needRebuild = true;
+
+  function rebuildCards(){
+    buildsEl.innerHTML = '';
+    cards = [];
+    for(const d of DEFS){
+      if(d.unlock && !state.unlocked[d.id]) continue;
+      const c = costOf(d);
+      const card = document.createElement('div');
+      card.className = 'card';
+      const chipsHtml = Object.keys(c).map(r=>{
+        const ic = {food:'🐟',wood:'🪵',stone:'🪨',coin:'🪙'}[r];
+        return '<span class="cc" data-r="'+r+'" data-amt="'+c[r]+'">'+ic+' <span>'+fmt(c[r])+'</span></span>';
+      }).join('');
+      card.innerHTML =
+        '<div class="crow"><div class="cic">'+d.ic+'</div>'+
+        '<div class="cmain"><div class="cname">'+d.name+'</div><div class="cblurb">'+d.blurb+'</div></div>'+
+        '<div class="owned">×'+(state.b[d.id]||0)+'</div></div>'+
+        '<div class="crow2"><div class="costs">'+chipsHtml+'</div>'+
+        '<button class="build">Construir</button></div>';
+      buildsEl.appendChild(card);
+      const btn = card.querySelector('.build');
+      const chips = [].slice.call(card.querySelectorAll('.cc')).map(el=>({
+        res:el.getAttribute('data-r'), amt:parseFloat(el.getAttribute('data-amt')), el:el
+      }));
+      btn.addEventListener('click', ()=>buy(d));
+      cards.push({def:d, el:card, btn, ownedEl:card.querySelector('.owned'), chips});
+    }
+    needRebuild = false;
+  }
+
+  function buy(d){
+    if(!canAfford(d)) return;
+    const c = costOf(d);
+    for(const r in c) state.res[r] -= c[r];
+    state.b[d.id] = (state.b[d.id]||0)+1;
+    recomputeCap();
+    log('Has construido <b style="color:var(--cream)">'+d.name+'</b>.');
+    needRebuild = true;
+    save();
+  }
+
+  // ---------- unlock check ----------
+  function checkUnlocks(){
+    state.peakStone = Math.max(state.peakStone||0, state.res.stone);
+    state.peakCoin = Math.max(state.peakCoin||0, state.res.coin);
+    for(const d of DEFS){
+      if(d.unlock && !state.unlocked[d.id] && d.unlock(state)){
+        state.unlocked[d.id] = true;
+        needRebuild = true;
+        log('⚒️ <b>¡Nuevo edificio disponible: '+d.name+'!</b>');
+      }
+    }
+  }
+
+  // ---------- DOM refs ----------
+  const el = {
+    food:document.getElementById('a-food'), wood:document.getElementById('a-wood'),
+    stone:document.getElementById('a-stone'), coin:document.getElementById('a-coin'),
+    rfood:document.getElementById('r-food'), rwood:document.getElementById('r-wood'),
+    rstone:document.getElementById('r-stone'), rcoin:document.getElementById('r-coin'),
+    popNow:document.getElementById('popNow'), popCap:document.getElementById('popCap'),
+    popFill:document.getElementById('popFill'), nextHint:document.getElementById('nextHint')
+  };
+  const chipEls = {};
+  [].slice.call(document.querySelectorAll('.chip[data-res]')).forEach(c=>chipEls[c.getAttribute('data-res')]=c);
+
+  function setRate(node, v, isFood){
+    let cls='rate', s;
+    if(isFood){
+      if(v>0.001){cls='rate pos';s='+'+v.toFixed(1)+'/s';}
+      else if(v<-0.001){cls='rate neg';s='−'+Math.abs(v).toFixed(1)+'/s';}
+      else s='0/s';
+    } else { s = (v>0.001?'+'+v.toFixed(1):'0')+'/s'; if(v>0.001) cls='rate pos'; }
+    node.textContent = s; node.className = cls;
+  }
+
+  function updateUI(){
+    if(needRebuild) rebuildCards();
+    const {rate, netFood} = rates();
+    el.food.textContent = fmt(state.res.food);
+    el.wood.textContent = fmt(state.res.wood);
+    el.stone.textContent = fmt(state.res.stone);
+    el.coin.textContent = fmt(state.res.coin);
+    setRate(el.rfood, netFood, true);
+    setRate(el.rwood, rate.wood, false);
+    setRate(el.rstone, rate.stone, false);
+    setRate(el.rcoin, rate.coin, false);
+    // chip visibility
+    chipEls.stone.classList.toggle('hide', !(state.unlocked.cantera || state.res.stone>0.5));
+    chipEls.coin.classList.toggle('hide', !(state.unlocked.mercado || state.res.coin>0.5));
+    // population
+    el.popNow.textContent = Math.floor(state.pop);
+    el.popCap.textContent = state.popCap;
+    el.popFill.style.width = Math.min(100,(state.pop/state.popCap)*100)+'%';
+    // cards afford state
+    for(const cd of cards){
+      const aff = canAfford(cd.def);
+      cd.btn.classList.toggle('off', !aff);
+      for(const ch of cd.chips) ch.el.classList.toggle('lack', state.res[ch.res] < ch.amt);
+    }
+    // next unlock hint
+    let nx=null;
+    for(const d of DEFS){ if(d.unlock && !state.unlocked[d.id]){ nx=d; break; } }
+    el.nextHint.innerHTML = nx ? ('Próximo desbloqueo: <b>'+nx.name+'</b> — requiere '+nx.req)
+                               : 'Has desbloqueado todo lo de esta versión. 🌅';
+  }
+
+  // ---------- tick ----------
+  let famineWarned=false;
+  function tick(dt){
+    const {rate, netFood} = rates();
+    state.res.food = Math.max(0, state.res.food + netFood*dt);
+    state.res.wood += rate.wood*dt;
+    state.res.stone += rate.stone*dt;
+    state.res.coin += rate.coin*dt;
+    if(netFood >= 0){
+      famineWarned=false;
+      if(state.pop < state.popCap) state.pop = Math.min(state.popCap, state.pop + 0.12*dt);
+    } else {
+      state.pop = Math.max(0, state.pop - 0.1*dt);
+      if(!famineWarned){ famineWarned=true; log('⚠️ <span style="color:var(--bad)">Falta comida — la gente se marcha.</span>'); }
+    }
+    checkUnlocks();
+  }
+
+  // ---------- save / load ----------
+  let inMem=null; // fallback if window.storage missing
+  function save(){
+    state.lastSave = Date.now();
+    const data = JSON.stringify(state);
+    try{ if(window.storage){ window.storage.set('portus_save', data); return; } }catch(e){}
+    inMem = data;
+  }
+  async function load(){
+    let raw=null;
+    try{ if(window.storage){ const r=await window.storage.get('portus_save'); if(r&&r.value) raw=r.value; } }catch(e){}
+    if(!raw && inMem) raw=inMem;
+    if(raw){
+      try{
+        const s=JSON.parse(raw);
+        state = Object.assign(freshState(), s);
+        state.res = Object.assign({food:0,wood:0,stone:0,coin:0}, s.res||{});
+        state.b = s.b||{}; state.unlocked = s.unlocked||{};
+      }catch(e){ state=freshState(); }
+    }
+    recomputeCap();
+  }
+
+  // ---------- offline progress ----------
+  function fmtDur(s){
+    s=Math.floor(s); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
+    if(h>0) return h+'h '+m+'m'; if(m>0) return m+'m'; return s+'s';
+  }
+  function offlineProgress(){
+    const now=Date.now();
+    let dt=(now - (state.lastSave||now))/1000;
+    state.lastSave=now;
+    if(dt < 30) return;
+    dt = Math.min(dt, 8*3600);
+    const before={...state.res};
+    const {rate, netFood}=rates();
+    state.res.food = Math.max(0, state.res.food + netFood*dt);
+    state.res.wood += rate.wood*dt;
+    state.res.stone += rate.stone*dt;
+    state.res.coin += rate.coin*dt;
+    if(netFood>=0 && state.pop<state.popCap) state.pop=Math.min(state.popCap, state.pop + 0.06*dt);
+    checkUnlocks();
+    const g={ food:state.res.food-before.food, wood:state.res.wood-before.wood,
+              stone:state.res.stone-before.stone, coin:state.res.coin-before.coin };
+    const names={food:'🐟 Comida',wood:'🪵 Madera',stone:'🪨 Piedra',coin:'🪙 Denarios'};
+    let rows='';
+    for(const r of ['food','wood','stone','coin']) if(g[r]>0.5)
+      rows+='<div class="g"><span>'+names[r]+'</span><span class="v">+'+fmt(g[r])+'</span></div>';
+    if(rows){
+      document.getElementById('awayTime').textContent='Estuviste fuera '+fmtDur(dt)+'. Tu puerto siguió trabajando:';
+      document.getElementById('awayGains').innerHTML=rows;
+      document.getElementById('ovl').classList.add('show');
+    }
+  }
+
+  // ---------- controls ----------
+  document.getElementById('saveBtn').addEventListener('click', ()=>{ save(); log('💾 Partida guardada.'); });
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    if(confirm('¿Seguro? Perderás tu puerto entero y empezarás de cero.')){
+      state=freshState(); logs=[]; needRebuild=true; save();
+      log('Has fundado un puerto nuevo. Que haya suerte.');
+    }
+  });
+  document.getElementById('ovlBtn').addEventListener('click', ()=>document.getElementById('ovl').classList.remove('show'));
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) save(); });
+  window.addEventListener('pagehide', save);
+
+  // ---------- loop ----------
+  let last=performance.now(), acc=0;
+  function loop(ts){
+    let dt=(ts-last)/1000; last=ts;
+    if(dt>1) dt=1;            // clamp tab-away jumps (offline handled separately)
+    tick(dt);
+    updateUI();
+    acc+=dt; if(acc>=5){ acc=0; save(); }
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- boot ----------
+  (async function(){
+    await load();
+    offlineProgress();
+    rebuildCards();
+    if(logs.length===0) log('Bienvenido a tu puerto. Construye un <b>Muelle</b> o un <b>Aserradero</b> para empezar.');
+    last=performance.now();
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>
