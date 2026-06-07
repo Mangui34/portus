@@ -126,7 +126,7 @@
 <div class="wrap">
   <header>
     <h1>PORTVS</h1>
-    <div class="tag">forja tu imperio del Mediterráneo</div>
+    <div class="tag">de una aldea junto al Tíber a señora del Mare Nostrum</div>
     <div class="topbtns">
       <button class="icobtn" id="saveBtn" title="Guardar">💾</button>
       <button class="icobtn" id="resetBtn" title="Reiniciar">↺</button>
@@ -134,7 +134,7 @@
   </header>
 
   <div class="resbar" id="resbar">
-    <div class="chip" data-res="food"><span class="ic">🐟</span><div class="col"><span class="amt" id="a-food">0</span><span class="rate" id="r-food">+0/s</span></div></div>
+    <div class="chip" data-res="food"><span class="ic">🌾</span><div class="col"><span class="amt" id="a-food">0</span><span class="rate" id="r-food">+0/s</span></div></div>
     <div class="chip" data-res="wood"><span class="ic">🪵</span><div class="col"><span class="amt" id="a-wood">0</span><span class="rate" id="r-wood">+0/s</span></div></div>
     <div class="chip hide" data-res="stone"><span class="ic">🪨</span><div class="col"><span class="amt" id="a-stone">0</span><span class="rate" id="r-stone">+0/s</span></div></div>
     <div class="chip hide" data-res="coin"><span class="ic">🪙</span><div class="col"><span class="amt" id="a-coin">0</span><span class="rate" id="r-coin">+0/s</span></div></div>
@@ -143,7 +143,7 @@
   <div class="pop">
     <span class="lbl">POBLACIÓN</span>
     <div class="bar"><div class="fill" id="popFill"></div></div>
-    <span class="num"><span id="popNow">0</span> / <span id="popCap">0</span></span>
+    <span class="num"><span id="popNow">0</span> / <span id="popCap">0</span> · <span id="popFree">0</span> libres</span>
   </div>
 
   <div class="sect">EDIFICIOS</div>
@@ -172,22 +172,22 @@
   // ---------- building definitions ----------
   // prod: per-second production. popCap: housing added. mult: cost growth per copy.
   const DEFS = [
-    { id:'casa',  name:'Casa',       ic:'🏠', blurb:'Da cobijo. +4 de población máx.',
+    { id:'casa',  name:'Casa',       ic:'🏠', blurb:'Cobijo para tus colonos. +4 de población máx.',
       base:{wood:10}, mult:1.18, popCap:4 },
-    { id:'muelle',name:'Muelle',     ic:'⚓', blurb:'Pesca en la bahía. Produce comida.',
+    { id:'muelle',name:'Campo de trigo', ic:'🌾', blurb:'El grano que alimenta Roma. Produce comida.',
       base:{wood:14}, mult:1.16, prod:{food:0.6} },
-    { id:'aserra',name:'Aserradero', ic:'🪓', blurb:'Tala los bosques. Produce madera.',
+    { id:'aserra',name:'Leñadores',  ic:'🪓', blurb:'Talan los bosques del Lacio. Producen madera.',
       base:{food:18}, mult:1.16, prod:{wood:0.5} },
-    { id:'mercado',name:'Mercado',   ic:'🪙', blurb:'Comercia por el Mare Nostrum. Produce denarios.',
+    { id:'mercado',name:'Foro',      ic:'🏛️', blurb:'El corazón del comercio y la vida pública. Produce denarios.',
       base:{wood:30,food:24}, mult:1.20, prod:{coin:0.4},
       unlock:s=>s.pop>=4, req:'4 de población' },
-    { id:'cantera',name:'Cantera',   ic:'⛏️', blurb:'Extrae piedra de la montaña.',
+    { id:'cantera',name:'Cantera',   ic:'⛏️', blurb:'Travertino de las colinas. Ya no eres una aldea.',
       base:{wood:42}, mult:1.18, prod:{stone:0.45},
       unlock:s=>s.pop>=6, req:'6 de población' },
-    { id:'villa', name:'Villa',      ic:'🏛️', blurb:'Lujo y prestigio. +10 población máx. y +5% a TODA la producción.',
+    { id:'villa', name:'Villa',      ic:'🏡', blurb:'La finca del patricio. +10 población máx. y +5% a TODA la producción.',
       base:{stone:30,coin:22}, mult:1.22, popCap:10,
       unlock:s=>(s.peakStone||s.res.stone)>=20, req:'20 de piedra' },
-    { id:'faro',  name:'Faro',       ic:'🗼', blurb:'Guía a los mercaderes. +25% a los denarios.',
+    { id:'faro',  name:'Faro de Ostia', ic:'🗼', blurb:'Por fin el mar. Guía a los mercaderes a tu puerto. +25% a los denarios.',
       base:{stone:60,coin:60}, mult:1.25,
       unlock:s=>(s.peakCoin||s.res.coin)>=80, req:'80 de denarios' }
   ];
@@ -230,20 +230,31 @@
   }
   function rates(){
     const rate = {food:0,wood:0,stone:0,coin:0};
-    const popMult = 1 + state.pop*0.02;
     const globalMult = 1 + (state.b.villa||0)*0.05;
     const coinMult = globalMult * (1 + (state.b.faro||0)*0.25);
     for(const d of DEFS){
       const n = state.b[d.id]||0; if(!n || !d.prod) continue;
       for(const r in d.prod){
-        let m = popMult*globalMult;
-        if(r==='coin') m = popMult*coinMult;
+        let m = globalMult;
+        if(r==='coin') m = coinMult;
         rate[r] += n * d.prod[r] * m;
       }
     }
     const consumption = state.pop*0.2;
     const netFood = rate.food - consumption;
     return {rate, netFood, consumption};
+  }
+
+  // ---------- workers ----------
+  // A building occupies 1 worker if it produces a resource (has d.prod).
+  function needsWorker(d){ return !!d.prod; }
+  function workersUsed(){
+    let w = 0;
+    for(const d of DEFS) if(needsWorker(d)) w += (state.b[d.id]||0);
+    return w;
+  }
+  function freePeople(){
+    return Math.floor(state.pop) - workersUsed();
   }
 
   // ---------- log ----------
@@ -269,7 +280,7 @@
       const card = document.createElement('div');
       card.className = 'card';
       const chipsHtml = Object.keys(c).map(r=>{
-        const ic = {food:'🐟',wood:'🪵',stone:'🪨',coin:'🪙'}[r];
+        const ic = {food:'🌾',wood:'🪵',stone:'🪨',coin:'🪙'}[r];
         return '<span class="cc" data-r="'+r+'" data-amt="'+c[r]+'">'+ic+' <span>'+fmt(c[r])+'</span></span>';
       }).join('');
       card.innerHTML =
@@ -291,6 +302,7 @@
 
   function buy(d){
     if(!canAfford(d)) return;
+    if(needsWorker(d) && freePeople() < 1) return;
     const c = costOf(d);
     for(const r in c) state.res[r] -= c[r];
     state.b[d.id] = (state.b[d.id]||0)+1;
@@ -320,6 +332,7 @@
     rfood:document.getElementById('r-food'), rwood:document.getElementById('r-wood'),
     rstone:document.getElementById('r-stone'), rcoin:document.getElementById('r-coin'),
     popNow:document.getElementById('popNow'), popCap:document.getElementById('popCap'),
+    popFree:document.getElementById('popFree'),
     popFill:document.getElementById('popFill'), nextHint:document.getElementById('nextHint')
   };
   const chipEls = {};
@@ -352,11 +365,14 @@
     // population
     el.popNow.textContent = Math.floor(state.pop);
     el.popCap.textContent = state.popCap;
+    el.popFree.textContent = Math.max(0, freePeople());
     el.popFill.style.width = Math.min(100,(state.pop/state.popCap)*100)+'%';
     // cards afford state
     for(const cd of cards){
       const aff = canAfford(cd.def);
-      cd.btn.classList.toggle('off', !aff);
+      const noFree = needsWorker(cd.def) && freePeople() < 1;
+      cd.btn.classList.toggle('off', !aff || noFree);
+      cd.btn.textContent = noFree ? 'Sin gente libre' : 'Construir';
       for(const ch of cd.chips) ch.el.classList.toggle('lack', state.res[ch.res] < ch.amt);
     }
     // next unlock hint
@@ -428,12 +444,12 @@
     checkUnlocks();
     const g={ food:state.res.food-before.food, wood:state.res.wood-before.wood,
               stone:state.res.stone-before.stone, coin:state.res.coin-before.coin };
-    const names={food:'🐟 Comida',wood:'🪵 Madera',stone:'🪨 Piedra',coin:'🪙 Denarios'};
+    const names={food:'🌾 Comida',wood:'🪵 Madera',stone:'🪨 Piedra',coin:'🪙 Denarios'};
     let rows='';
     for(const r of ['food','wood','stone','coin']) if(g[r]>0.5)
       rows+='<div class="g"><span>'+names[r]+'</span><span class="v">+'+fmt(g[r])+'</span></div>';
     if(rows){
-      document.getElementById('awayTime').textContent='Estuviste fuera '+fmtDur(dt)+'. Tu puerto siguió trabajando:';
+      document.getElementById('awayTime').textContent='Estuviste fuera '+fmtDur(dt)+'. Tu aldea siguió trabajando:';
       document.getElementById('awayGains').innerHTML=rows;
       document.getElementById('ovl').classList.add('show');
     }
@@ -442,9 +458,9 @@
   // ---------- controls ----------
   document.getElementById('saveBtn').addEventListener('click', ()=>{ save(); log('💾 Partida guardada.'); });
   document.getElementById('resetBtn').addEventListener('click', ()=>{
-    if(confirm('¿Seguro? Perderás tu puerto entero y empezarás de cero.')){
+    if(confirm('¿Seguro? Perderás tu aldea entera y empezarás de cero.')){
       state=freshState(); logs=[]; needRebuild=true; save();
-      log('Has fundado un puerto nuevo. Que haya suerte.');
+      log('Has fundado una aldea nueva. Que haya suerte.');
     }
   });
   document.getElementById('ovlBtn').addEventListener('click', ()=>document.getElementById('ovl').classList.remove('show'));
@@ -467,7 +483,7 @@
     await load();
     offlineProgress();
     rebuildCards();
-    if(logs.length===0) log('Bienvenido a tu puerto. Construye un <b>Muelle</b> o un <b>Aserradero</b> para empezar.');
+    if(logs.length===0) log('Fundas una aldea junto al Tíber. Levanta un <b>Campo de trigo</b> o unos <b>Leñadores</b> para empezar.');
     last=performance.now();
     requestAnimationFrame(loop);
   })();
